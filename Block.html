@@ -1,1 +1,777 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<title>SirTros-Block | SirTros-Games</title>
 
+<script src="https://unpkg.com/lucide@latest"></script>
+<script type="importmap">
+{
+  "imports": {
+    "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js"
+  }
+}
+</script>
+
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Nunito:wght@400;500;600;700;800;900&display=swap');
+
+:root{
+ --bg:#090e14;
+ --panel:#111b26;
+ --panel2:#1a2937;
+ --border:#ffffff17;
+ --text:#f5f8fc;
+ --muted:#9baaba;
+ --green:#63dda0;
+ --green2:#269b68;
+}
+
+*{box-sizing:border-box}
+html,body{margin:0;width:100%;height:100%;overflow:hidden;background:var(--bg);color:var(--text);font-family:Nunito,sans-serif;user-select:none}
+button,input,select{font:inherit}
+button{border:1px solid var(--border);background:#263746;color:white;border-radius:13px;padding:12px 16px;font-weight:800;cursor:pointer;transition:.16s}
+button:hover{background:#354b5e}
+button:active{transform:scale(.97)}
+button.primary{background:var(--green2);color:#06150d;border:0}
+button.primary:hover{background:var(--green)}
+button.danger{background:#4a242b;color:#ffb5b5}
+.hidden{display:none!important}
+i[data-lucide]{width:19px;height:19px;vertical-align:middle;stroke-width:2.2}
+
+#game{position:fixed;inset:0;background:#8bc8ed}
+#game canvas{display:block;width:100%;height:100%}
+
+/* MENU */
+#menu,#loading{
+ position:fixed;inset:0;z-index:20;
+ background:
+ linear-gradient(90deg,rgba(5,10,16,.91),rgba(5,10,16,.55) 55%,rgba(5,10,16,.35)),
+ linear-gradient(0deg,rgba(5,10,16,.65),transparent 65%),
+ url("https://sirtros.github.io/SirTros-Games/pozadi.webp") center/cover no-repeat;
+}
+#menu{display:flex;align-items:center;justify-content:center;padding:20px;overflow:auto}
+.menu-card{
+ width:min(720px,100%);
+ padding:clamp(22px,4vw,38px);
+ border:1px solid #ffffff25;
+ border-radius:26px;
+ background:rgba(9,16,24,.86);
+ backdrop-filter:blur(22px);
+ box-shadow:0 25px 90px #0008;
+}
+.brand{display:flex;align-items:center;gap:15px;margin-bottom:25px}
+.logo{
+ width:58px;height:58px;border-radius:18px;
+ display:grid;place-items:center;
+ background:linear-gradient(145deg,#80edb4,#239568);
+ color:#082016;
+}
+.logo i{width:32px;height:32px}
+.brand h1{font-size:clamp(27px,5vw,41px);margin:0;font-weight:900;letter-spacing:-1.5px}
+.brand p{margin:3px 0 0;color:#b3c2d0;font-size:13px;font-weight:700}
+.menu-tabs{display:flex;gap:8px;margin:20px 0;flex-wrap:wrap}
+.menu-tabs button{background:#ffffff0b;color:#aab9c7}
+.menu-tabs button.active{background:#214c39;color:#a5f3c4;border-color:#4b9c70}
+.section-title{font-size:18px;font-weight:900;margin:20px 0 12px}
+.world-list{display:grid;gap:9px;max-height:280px;overflow:auto}
+.world-item{
+ display:flex;align-items:center;justify-content:space-between;gap:12px;
+ padding:14px;border:1px solid var(--border);border-radius:15px;background:#ffffff0b;
+}
+.world-info{min-width:0}
+.world-info strong{display:block;overflow:hidden;text-overflow:ellipsis}
+.world-info small{color:var(--muted);font-size:12px}
+.world-actions{display:flex;gap:7px;flex-shrink:0}
+.world-actions button{padding:9px 12px;font-size:12px}
+.menu-actions{display:flex;gap:10px;margin-top:16px;flex-wrap:wrap}
+.menu-actions button{flex:1}
+.setting-row{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:15px 0;border-bottom:1px solid var(--border)}
+.setting-row:last-child{border:0}
+.setting-row strong{display:block}
+.setting-row small{display:block;color:var(--muted);margin-top:3px}
+.switch{min-width:76px;background:#293b49}
+.switch.on{background:#20553c;color:#a6f3c3;border-color:#43885e}
+select{background:#1d2b39;color:white;border:1px solid var(--border);border-radius:12px;padding:11px}
+.footer{margin-top:25px;color:#9aa9b7;font-size:11px;font-weight:800;letter-spacing:.5px}
+
+/* LOADING */
+#loading{
+ z-index:30;display:none;align-items:center;justify-content:center;flex-direction:column;
+ text-align:center;
+}
+#loading.show{display:flex}
+.loading-card{width:min(390px,90%);padding:30px;border-radius:24px;background:#09121dcc;backdrop-filter:blur(18px);border:1px solid #ffffff20}
+.loading-logo{width:54px;height:54px;border-radius:17px;background:#2da16d;display:grid;place-items:center;margin:0 auto 15px;color:#06170d}
+.loading-logo i{width:29px;height:29px}
+.loading-title{font-size:27px;font-weight:900}
+.loading-sub{font-size:13px;color:#b5c2ce;margin-top:6px}
+.loading-bar{height:7px;border-radius:20px;background:#344454;overflow:hidden;margin-top:24px}
+#loadingProgress{height:100%;width:0;background:var(--green);transition:width .25s}
+#loadingPercent{font-size:12px;color:var(--green);font-weight:900;margin-top:9px}
+
+/* HUD */
+#hud{position:fixed;inset:0;z-index:5;pointer-events:none}
+#crosshair{position:absolute;left:50%;top:50%;width:7px;height:7px;background:white;border-radius:50%;transform:translate(-50%,-50%);box-shadow:0 0 4px black}
+#health{position:absolute;top:17px;left:18px;display:flex;gap:3px;font-size:22px;filter:drop-shadow(0 2px 3px #000)}
+.heart{color:#f35e6b}.heart.empty{color:#59616b}
+#hotbar{position:absolute;bottom:18px;left:50%;transform:translateX(-50%);display:flex;gap:4px;padding:6px;background:#101820c9;border:1px solid #ffffff35;border-radius:13px;pointer-events:auto}
+.hot-slot{position:relative;width:52px;height:52px;border:2px solid #ffffff25;border-radius:9px;background:#263746df;display:grid;place-items:center;font-size:23px;cursor:pointer}
+.hot-slot.selected{border-color:white;background:#587183;transform:translateY(-4px)}
+.slot-count{position:absolute;right:4px;bottom:1px;font-size:11px;font-weight:900;text-shadow:1px 1px 3px black}
+.slot-number{position:absolute;left:4px;top:1px;font-size:9px;color:#d1dce5}
+#gameHint{position:absolute;bottom:90px;left:50%;transform:translateX(-50%);font-size:12px;color:white;background:#101820aa;padding:8px 13px;border-radius:10px;white-space:nowrap}
+
+/* INVENTORY */
+#inventoryPanel{position:fixed;z-index:15;inset:0;background:#0009;display:none;align-items:center;justify-content:center;padding:16px}
+#inventoryPanel.show{display:flex}
+.inventory-card{width:min(650px,100%);max-height:88vh;overflow:auto;padding:22px;background:#111c28;border:1px solid var(--border);border-radius:23px}
+.panel-head{display:flex;justify-content:space-between;align-items:center}
+.panel-head h2{margin:0}
+.inventory-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(100px,1fr));gap:9px}
+.inventory-item{min-height:85px;padding:12px;border:1px solid var(--border);border-radius:13px;background:#1b2937;text-align:center;cursor:pointer}
+.inventory-item.selected{border-color:var(--green);background:#1d4033}
+.item-icon{display:block;font-size:26px;margin-bottom:4px}
+.inventory-item small{color:var(--muted)}
+.craft-list{display:grid;gap:9px}
+.recipe{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:12px;background:#1b2937;border:1px solid var(--border);border-radius:13px}
+.recipe small{display:block;color:var(--muted);margin-top:4px}
+.recipe button{padding:9px 12px}
+#toast{position:fixed;z-index:40;bottom:105px;left:50%;transform:translate(-50%,15px);opacity:0;background:#182634;border:1px solid var(--border);border-radius:12px;padding:11px 17px;font-size:13px;font-weight:900;pointer-events:none;transition:.2s}
+#toast.show{opacity:1;transform:translate(-50%,0)}
+
+/* MOBIL */
+#mobileControls{position:fixed;z-index:8;inset:0;display:none;pointer-events:none;touch-action:none}
+#joystick{position:absolute;left:20px;bottom:94px;width:112px;height:112px;border-radius:50%;background:#172432b9;border:2px solid #ffffff55;pointer-events:auto;touch-action:none}
+#stick{position:absolute;width:48px;height:48px;left:30px;top:30px;border-radius:50%;background:#dce9efdb;border:2px solid white;box-shadow:0 3px 12px #0008}
+#mobileLook{position:absolute;right:0;top:0;width:55%;height:70%;pointer-events:auto;touch-action:none}
+.mobile-actions{position:absolute;right:17px;bottom:100px;display:grid;grid-template-columns:repeat(2,55px);gap:9px;pointer-events:auto}
+.mobile-btn{width:55px;height:55px;border-radius:17px;background:#172432d9;border:2px solid #ffffff66;display:grid;place-items:center;padding:0;font-size:22px;touch-action:none}
+.mobile-btn i{width:23px;height:23px}
+.mobile-btn:active{background:#347653}
+@media(max-width:560px){
+ .menu-card{padding:19px}
+ .world-item{align-items:flex-start}
+ .world-actions{flex-direction:column}
+ .hot-slot{width:39px;height:43px;font-size:19px}
+ #hotbar{bottom:8px;gap:2px;padding:4px}
+ #health{top:9px;left:10px;font-size:18px}
+ #joystick{left:12px;bottom:82px;width:104px;height:104px}
+ #stick{left:26px;top:26px}
+ .mobile-actions{right:11px;bottom:83px;grid-template-columns:repeat(2,51px);gap:7px}
+ .mobile-btn{width:51px;height:51px}
+ #gameHint{display:none}
+}
+</style>
+</head>
+
+<body>
+<div id="game"></div>
+
+<div id="menu">
+ <div class="menu-card">
+  <div class="brand">
+   <div class="logo"><i data-lucide="blocks"></i></div>
+   <div>
+    <h1>SirTros-Block</h1>
+    <p>Blokový svět · SirTros-Games</p>
+   </div>
+  </div>
+
+  <div class="menu-tabs">
+   <button class="active" data-tab="worlds"><i data-lucide="globe"></i> Světy</button>
+   <button data-tab="settings"><i data-lucide="settings"></i> Nastavení</button>
+  </div>
+
+  <section id="worldsTab">
+   <div class="section-title">Moje světy</div>
+   <div id="worldList" class="world-list"></div>
+   <div class="menu-actions">
+    <button class="primary" id="createWorld"><i data-lucide="plus"></i> Nový svět</button>
+    <button id="refreshWorlds"><i data-lucide="refresh-cw"></i></button>
+   </div>
+  </section>
+
+  <section id="settingsTab" class="hidden">
+   <div class="section-title">Nastavení hry</div>
+   <div class="setting-row">
+    <div><strong>Grafika</strong><small>Kvalita vykreslování</small></div>
+    <select id="graphics">
+     <option value="low">Malá</option>
+     <option value="medium" selected>Střední</option>
+     <option value="high">Vysoká</option>
+     <option value="excellent">Excelentní</option>
+    </select>
+   </div>
+   <div class="setting-row" id="mobileSetting">
+    <div><strong>Mobilní ovládání</strong><small>Joystick a dotyková tlačítka</small></div>
+    <button class="switch" id="mobileSwitch">NE</button>
+   </div>
+   <div class="setting-row">
+    <div><strong>Stíny</strong><small>Vykreslování stínů</small></div>
+    <button class="switch on" id="shadowSwitch">ANO</button>
+   </div>
+   <div class="setting-row">
+    <div><strong>Ukládání</strong><small>Automaticky do prohlížeče</small></div>
+    <i data-lucide="save"></i>
+   </div>
+  </section>
+  <div class="footer">SirTros-Games · 3D BLOCK WORLD</div>
+ </div>
+</div>
+
+<div id="loading">
+ <div class="loading-card">
+  <div class="loading-logo"><i data-lucide="blocks"></i></div>
+  <div class="loading-title">Načítání světa</div>
+  <div class="loading-sub" id="loadingText">Připravujeme bloky...</div>
+  <div class="loading-bar"><div id="loadingProgress"></div></div>
+  <div id="loadingPercent">0 %</div>
+ </div>
+</div>
+
+<div id="hud" class="hidden">
+ <div id="health"></div>
+ <div id="crosshair"></div>
+ <div id="gameHint">WASD · Mezerník · Myš · Levé tlačítko těžit · Pravé položit · E inventář</div>
+ <div id="hotbar"></div>
+</div>
+
+<div id="mobileControls">
+ <div id="mobileLook"></div>
+ <div id="joystick"><div id="stick"></div></div>
+ <div class="mobile-actions">
+  <button class="mobile-btn" id="mobileJump"><i data-lucide="arrow-up"></i></button>
+  <button class="mobile-btn" id="mobileBreak"><i data-lucide="pickaxe"></i></button>
+  <button class="mobile-btn" id="mobilePlace"><i data-lucide="box"></i></button>
+  <button class="mobile-btn" id="mobileInventory"><i data-lucide="backpack"></i></button>
+ </div>
+</div>
+
+<div id="inventoryPanel">
+ <div class="inventory-card">
+  <div class="panel-head"><h2>Inventář</h2><button id="closeInventory"><i data-lucide="x"></i></button></div>
+  <div class="section-title">Předměty</div>
+  <div id="inventoryGrid" class="inventory-grid"></div>
+  <div class="section-title">Výroba</div>
+  <div id="craftList" class="craft-list"></div>
+ </div>
+</div>
+<div id="toast"></div>
+
+<script type="module">
+import * as THREE from 'three';
+
+const $ = id => document.getElementById(id);
+const mobileDevice = /Android|iPhone|iPad|iPod|Mobile/i.test(navigator.userAgent) ||
+ (navigator.maxTouchPoints>1 && innerWidth<950);
+
+let mobileEnabled=mobileDevice;
+let shadowsEnabled=true;
+let quality='medium';
+let scene,camera,renderer,clock;
+let currentWorld=null;
+let edits=new Map();
+let meshes=[];
+let running=false;
+let inventoryOpen=false;
+let selected=0;
+let yaw=0,pitch=0;
+let jumpRequested=false;
+const keys={};
+const joy={x:0,z:0};
+let lookPointer=null,lastX=0,lastY=0;
+
+let player={x:80,y:10,z:80,vy:0,grounded:false,hp:20};
+
+const BLOCKS={
+ grass:{name:'Tráva',icon:'🟩'},
+ dirt:{name:'Hlína',icon:'🟫'},
+ stone:{name:'Kámen',icon:'🪨'},
+ wood:{name:'Dřevo',icon:'🪵'},
+ plank:{name:'Prkna',icon:'🟨'},
+ sand:{name:'Písek',icon:'🏖️'},
+ glass:{name:'Sklo',icon:'🔷'},
+ brick:{name:'Cihly',icon:'🧱'},
+ stick:{name:'Tyčka',icon:'🪄'}
+};
+const colors={
+ grass:0x62a94c,dirt:0x805337,stone:0x858d96,
+ wood:0x80502b,plank:0xb18a51,sand:0xd9c17c,
+ glass:0x8ddce5,brick:0xa94d3c
+};
+const items=Object.keys(BLOCKS);
+let inventory=Object.fromEntries(items.map(x=>[x,0]));
+const hotbar=['grass','dirt','stone','wood','plank','sand','glass','brick','stick'];
+
+const recipes=[
+ {name:'Prkna × 4',result:'plank',amount:4,cost:{wood:1}},
+ {name:'Tyčky × 4',result:'stick',amount:4,cost:{plank:2}},
+ {name:'Sklo × 1',result:'glass',amount:1,cost:{sand:2}},
+ {name:'Cihly × 2',result:'brick',amount:2,cost:{stone:3}}
+];
+
+function icons(){window.lucide?.createIcons()}
+icons();
+
+function toast(msg){
+ const el=$('toast');el.textContent=msg;el.classList.add('show');
+ clearTimeout(toast.timer);
+ toast.timer=setTimeout(()=>el.classList.remove('show'),1800);
+}
+function storageRead(){
+ try{return JSON.parse(localStorage.getItem('sirtros_block_worlds_v1')||'[]')}
+ catch{return []}
+}
+function storageWrite(list){localStorage.setItem('sirtros_block_worlds_v1',JSON.stringify(list))}
+function saveWorld(){
+ if(!currentWorld)return;
+ currentWorld.edits=[...edits.entries()];
+ currentWorld.inventory=inventory;
+ currentWorld.player={x:player.x,y:player.y,z:player.z,hp:player.hp};
+ currentWorld.updated=Date.now();
+ const list=storageRead();
+ const i=list.findIndex(w=>w.id===currentWorld.id);
+ if(i<0)list.push(currentWorld);else list[i]=currentWorld;
+ try{storageWrite(list)}catch(e){toast('Úložiště je plné!');console.error(e)}
+}
+function createWorld(){
+ const list=storageRead();
+ const world={
+  id:'world_'+Date.now(),
+  name:'Svět '+(list.length+1),
+  seed:Math.floor(Math.random()*999999999),
+  created:Date.now(),updated:Date.now(),edits:[],inventory:null,player:null
+ };
+ list.push(world);storageWrite(list);return world;
+}
+function renderWorlds(){
+ const root=$('worldList');root.innerHTML='';
+ const list=storageRead();
+ if(!list.length){
+  root.innerHTML='<div style="text-align:center;padding:25px;color:#a5b3c0"> <i data-lucide="globe" style="width:32px;height:32px"></i><br>Zatím nemáš žádný svět.</div>';
+  icons();return;
+ }
+ list.forEach(w=>{
+  const row=document.createElement('div');row.className='world-item';
+  const info=document.createElement('div');info.className='world-info';
+  const strong=document.createElement('strong');strong.textContent=w.name;
+  const small=document.createElement('small');small.textContent='10 × 10 chunků · '+new Date(w.updated).toLocaleDateString('cs-CZ');
+  info.append(strong,small);
+  const actions=document.createElement('div');actions.className='world-actions';
+  const play=document.createElement('button');play.className='primary';play.innerHTML='<i data-lucide="play"></i> Hrát';
+  play.onclick=()=>loadWorld(w.id);
+  const del=document.createElement('button');del.className='danger';del.innerHTML='<i data-lucide="trash-2"></i>';
+  del.title='Smazat svět';
+  del.onclick=()=>{
+   const updated=storageRead().filter(x=>x.id!==w.id);
+   storageWrite(updated);renderWorlds();toast('Svět smazán');
+  };
+  actions.append(play,del);row.append(info,actions);root.append(row);
+ });
+ icons();
+}
+
+document.querySelectorAll('[data-tab]').forEach(btn=>{
+ btn.onclick=()=>{
+  document.querySelectorAll('[data-tab]').forEach(x=>x.classList.remove('active'));
+  btn.classList.add('active');
+  $('worldsTab').classList.toggle('hidden',btn.dataset.tab!=='worlds');
+  $('settingsTab').classList.toggle('hidden',btn.dataset.tab!=='settings');
+ };
+});
+$('createWorld').onclick=()=>{
+ const w=createWorld();renderWorlds();loadWorld(w.id);
+};
+$('refreshWorlds').onclick=renderWorlds;
+
+$('mobileSetting').style.display=mobileDevice?'flex':'none';
+function updateMobileSwitch(){
+ $('mobileSwitch').textContent=mobileEnabled?'ANO':'NE';
+ $('mobileSwitch').classList.toggle('on',mobileEnabled);
+}
+$('mobileSwitch').onclick=()=>{
+ if(!mobileDevice)return;
+ mobileEnabled=!mobileEnabled;updateMobileSwitch();
+ if(running)$('mobileControls').style.display=mobileEnabled?'block':'none';
+ toast(mobileEnabled?'Mobilní ovládání zapnuto':'Mobilní ovládání vypnuto');
+};
+$('shadowSwitch').onclick=()=>{
+ shadowsEnabled=!shadowsEnabled;
+ $('shadowSwitch').textContent=shadowsEnabled?'ANO':'NE';
+ $('shadowSwitch').classList.toggle('on',shadowsEnabled);
+ if(renderer)renderer.shadowMap.enabled=shadowsEnabled;
+};
+$('graphics').onchange=e=>{
+ quality=e.target.value;if(renderer)applyGraphics();
+};
+
+/* THREE */
+function initThree(){
+ if(renderer)return;
+ scene=new THREE.Scene();
+ scene.background=new THREE.Color(0x8bc8ed);
+ scene.fog=new THREE.Fog(0x8bc8ed,35,160);
+ camera=new THREE.PerspectiveCamera(75,innerWidth/innerHeight,.1,350);
+ camera.rotation.order='YXZ';
+ renderer=new THREE.WebGLRenderer({antialias:true,powerPreference:'high-performance'});
+ renderer.setSize(innerWidth,innerHeight);
+ renderer.setPixelRatio(Math.min(devicePixelRatio,1.5));
+ renderer.outputColorSpace=THREE.SRGBColorSpace;
+ renderer.toneMapping=THREE.ACESFilmicToneMapping;
+ renderer.shadowMap.enabled=shadowsEnabled;
+ renderer.shadowMap.type=THREE.PCFSoftShadowMap;
+ $('game').appendChild(renderer.domElement);
+ scene.add(new THREE.HemisphereLight(0xd7edff,0x657347,1.5));
+ const sun=new THREE.DirectionalLight(0xfff0d5,2.1);
+ sun.position.set(-60,100,40);sun.castShadow=true;
+ sun.shadow.mapSize.set(1024,1024);
+ sun.shadow.camera.left=-100;sun.shadow.camera.right=100;
+ sun.shadow.camera.top=100;sun.shadow.camera.bottom=-100;
+ scene.add(sun);
+ clock=new THREE.Clock();
+ window.addEventListener('resize',resize);
+ renderer.domElement.addEventListener('click',()=>{
+  if(running&&!mobileDevice&&!inventoryOpen&&document.pointerLockElement!==renderer.domElement)
+   renderer.domElement.requestPointerLock?.();
+ });
+ applyGraphics();animate();
+}
+function applyGraphics(){
+ const q={
+  low:{pixel:.8,far:105},
+  medium:{pixel:1.2,far:155},
+  high:{pixel:1.6,far:205},
+  excellent:{pixel:2,far:255}
+ }[quality];
+ renderer.setPixelRatio(Math.min(devicePixelRatio,q.pixel));
+ renderer.shadowMap.enabled=shadowsEnabled;
+ scene.fog.far=q.far;scene.fog.near=q.far*.25;
+ renderer.setSize(innerWidth,innerHeight);
+}
+function resize(){
+ if(!camera||!renderer)return;
+ camera.aspect=innerWidth/innerHeight;camera.updateProjectionMatrix();
+ renderer.setSize(innerWidth,innerHeight);
+}
+
+/* TERRAIN */
+const SIZE=160;
+function hash(x,z,s){
+ let n=Math.imul(x,374761393)+Math.imul(z,668265263)+s;
+ n=Math.imul(n^(n>>>13),1274126177);
+ return ((n^(n>>>16))>>>0)/4294967295;
+}
+function heightAt(x,z){
+ const s=currentWorld?.seed||1;
+ return Math.max(3,Math.floor(6+Math.sin(x*.045+s*.00001)*1.4+
+ Math.cos(z*.05+s*.00002)*1.3+(hash(x,z,s)-.5)*1.3));
+}
+function key(x,y,z){return `${x},${y},${z}`}
+function baseBlock(x,y,z){
+ if(x<0||z<0||x>=SIZE||z>=SIZE||y<0)return null;
+ const h=heightAt(x,z);
+ if(y>h)return null;
+ if(y===h)return 'grass';
+ if(y>=h-2)return 'dirt';
+ return 'stone';
+}
+function getBlock(x,y,z){
+ const k=key(x,y,z);
+ return edits.has(k)?edits.get(k):baseBlock(x,y,z);
+}
+function clearMeshes(){
+ for(const m of meshes){scene.remove(m);m.geometry.dispose();m.material.dispose()}
+ meshes=[];
+}
+function buildWorld(){
+ clearMeshes();
+ const cells=Object.fromEntries(Object.keys(colors).map(t=>[t,[]]));
+ for(let x=0;x<SIZE;x++)for(let z=0;z<SIZE;z++){
+  const h=heightAt(x,z);
+  for(let y=0;y<=h;y++){
+   const k=key(x,y,z);
+   const type=edits.has(k)?edits.get(k):baseBlock(x,y,z);
+   if(type&&cells[type])cells[type].push({x,y,z});
+  }
+ }
+ for(const [k,type] of edits){
+  if(!type)continue;
+  const [x,y,z]=k.split(',').map(Number);
+  if(!baseBlock(x,y,z)&&cells[type])cells[type].push({x,y,z});
+ }
+ for(const [type,positions] of Object.entries(cells)){
+  if(!positions.length)continue;
+  const material=new THREE.MeshStandardMaterial({
+   color:colors[type],roughness:type==='glass'?.25:.92,
+   metalness:0
+  });
+  const mesh=new THREE.InstancedMesh(new THREE.BoxGeometry(1,1,1),material,positions.length);
+  const dummy=new THREE.Object3D();
+  positions.forEach((p,i)=>{
+   dummy.position.set(p.x+.5,p.y+.5,p.z+.5);dummy.updateMatrix();
+   mesh.setMatrixAt(i,dummy.matrix);
+  });
+  mesh.instanceMatrix.needsUpdate=true;
+  mesh.userData={type,positions};
+  mesh.castShadow=shadowsEnabled;mesh.receiveShadow=true;
+  scene.add(mesh);meshes.push(mesh);
+ }
+}
+
+/* PLAYER */
+function updateCamera(){
+ camera.position.set(player.x,player.y+1.62,player.z);
+ camera.rotation.set(pitch,yaw,0,'YXZ');
+}
+function startPosition(){
+ const p=currentWorld.player;
+ if(p){
+  player.x=p.x;player.z=p.z;
+  player.y=Math.max(p.y,heightAt(Math.floor(p.x),Math.floor(p.z))+1);
+  player.hp=p.hp??20;
+ }else{
+  player.x=80;player.z=80;player.y=heightAt(80,80)+1;player.hp=20;
+ }
+ player.vy=0;player.grounded=true;yaw=0;pitch=0;updateCamera();
+}
+function updatePlayer(dt){
+ if(!running||inventoryOpen)return;
+ const forward=new THREE.Vector3(-Math.sin(yaw),0,-Math.cos(yaw));
+ const right=new THREE.Vector3(Math.cos(yaw),0,-Math.sin(yaw));
+ let f=(keys.KeyW?1:0)-(keys.KeyS?1:0);
+ let r=(keys.KeyD?1:0)-(keys.KeyA?1:0);
+ if(mobileEnabled&&mobileDevice){f-=joy.z;r+=joy.x}
+ const move=forward.multiplyScalar(f).add(right.multiplyScalar(r));
+ if(move.lengthSq()>1)move.normalize();
+ player.x+=move.x*5.2*dt;player.z+=move.z*5.2*dt;
+ player.x=THREE.MathUtils.clamp(player.x,1,SIZE-2);
+ player.z=THREE.MathUtils.clamp(player.z,1,SIZE-2);
+ const ground=heightAt(Math.floor(player.x),Math.floor(player.z))+1;
+ if(jumpRequested&&player.grounded){player.vy=7.2;player.grounded=false}
+ jumpRequested=false;
+ player.vy-=19*dt;player.y+=player.vy*dt;
+ if(player.y<=ground){
+  if(player.vy<-12){player.hp=Math.max(0,player.hp-2);updateHealth();toast('Tvrdý dopad!')}
+  player.y=ground;player.vy=0;player.grounded=true;
+ }
+ if(player.y<-10){player.y=ground;player.vy=0}
+ updateCamera();
+}
+function updateHealth(){
+ $('health').innerHTML='';
+ for(let i=0;i<10;i++){
+  const h=document.createElement('span');
+  h.className='heart'+(i*2>=player.hp?' empty':'');
+  h.textContent=i*2+2<=player.hp?'♥':i*2+1<=player.hp?'♥':'♡';
+  $('health').append(h);
+ }
+}
+
+/* HOTBAR / INVENTORY */
+function updateHotbar(){
+ const root=$('hotbar');root.innerHTML='';
+ hotbar.forEach((type,i)=>{
+  const slot=document.createElement('div');
+  slot.className='hot-slot'+(i===selected?' selected':'');
+  slot.innerHTML=`<span class="slot-number">${i+1}</span>${BLOCKS[type].icon}<span class="slot-count">${inventory[type]||0}</span>`;
+  slot.onclick=()=>{selected=i;updateHotbar()};
+  root.append(slot);
+ });
+}
+function updateInventory(){
+ const root=$('inventoryGrid');root.innerHTML='';
+ items.forEach(type=>{
+  const el=document.createElement('div');
+  el.className='inventory-item'+(hotbar[selected]===type?' selected':'');
+  el.innerHTML=`<span class="item-icon">${BLOCKS[type].icon}</span><strong>${BLOCKS[type].name}</strong><br><small>${inventory[type]||0} ks</small>`;
+  el.onclick=()=>{
+   if(inventory[type]>0){
+    const i=hotbar.indexOf(type);
+    if(i>=0)selected=i;
+    updateHotbar();updateInventory();
+   }
+  };
+  root.append(el);
+ });
+ const craft=$('craftList');craft.innerHTML='';
+ recipes.forEach(recipe=>{
+  const can=Object.entries(recipe.cost).every(([t,n])=>(inventory[t]||0)>=n);
+  const row=document.createElement('div');row.className='recipe';
+  const desc=document.createElement('div');
+  desc.innerHTML=`<strong>${recipe.name}</strong><small>${Object.entries(recipe.cost).map(([t,n])=>BLOCKS[t].name+' '+n).join(' · ')}</small>`;
+  const btn=document.createElement('button');btn.className=can?'primary':'';
+  btn.textContent='Vyrobit';btn.disabled=!can;btn.style.opacity=can?'1':'.4';
+  btn.onclick=()=>craftItem(recipe);
+  row.append(desc,btn);craft.append(row);
+ });
+}
+function craftItem(r){
+ if(!Object.entries(r.cost).every(([t,n])=>(inventory[t]||0)>=n)){toast('Chybí suroviny');return}
+ for(const [t,n] of Object.entries(r.cost))inventory[t]-=n;
+ inventory[r.result]+=r.amount;
+ updateInventory();updateHotbar();saveWorld();toast('Vyrobeno: '+BLOCKS[r.result].name);
+}
+function toggleInventory(force){
+ inventoryOpen=force??!inventoryOpen;
+ $('inventoryPanel').classList.toggle('show',inventoryOpen);
+ if(inventoryOpen){updateInventory();updateHotbar();document.exitPointerLock?.()}
+ else if(!mobileDevice&&running)renderer.domElement.requestPointerLock?.();
+}
+$('closeInventory').onclick=()=>toggleInventory(false);
+
+/* BLOCK INTERACTION */
+const raycaster=new THREE.Raycaster();
+raycaster.far=6;
+function targetBlock(){
+ raycaster.setFromCamera(new THREE.Vector2(0,0),camera);
+ const hits=raycaster.intersectObjects(meshes,false);
+ if(!hits.length)return null;
+ const h=hits[0],p=h.object.userData.positions[h.instanceId];
+ if(!p)return null;
+ return {x:p.x,y:p.y,z:p.z,type:h.object.userData.type,normal:h.face.normal.clone()};
+}
+function breakBlock(){
+ if(!running||inventoryOpen)return;
+ const t=targetBlock();if(!t)return;
+ edits.set(key(t.x,t.y,t.z),null);
+ inventory[t.type]=(inventory[t.type]||0)+1;
+ buildWorld();updateHotbar();saveWorld();
+}
+function placeBlock(){
+ if(!running||inventoryOpen)return;
+ const t=targetBlock();if(!t)return;
+ const type=hotbar[selected];
+ if(type==='stick'){toast('Tyčku nelze položit');return}
+ if((inventory[type]||0)<=0){toast('Nemáš tento blok');return}
+ const x=t.x+Math.round(t.normal.x),y=t.y+Math.round(t.normal.y),z=t.z+Math.round(t.normal.z);
+ if(x<0||z<0||x>=SIZE||z>=SIZE||y<0||y>40)return;
+ if(Math.abs(x+.5-player.x)<.8&&Math.abs(z+.5-player.z)<.8&&Math.abs(y+.5-player.y-1)<1.5)return;
+ if(getBlock(x,y,z))return;
+ edits.set(key(x,y,z),type);inventory[type]--;
+ buildWorld();updateHotbar();saveWorld();
+}
+
+/* KEYBOARD + MOUSE */
+window.addEventListener('keydown',e=>{
+ keys[e.code]=true;
+ if(e.code==='Space'){e.preventDefault();jumpRequested=true}
+ if(e.code==='KeyE'&&running)toggleInventory();
+ if(e.code==='Escape'&&inventoryOpen)toggleInventory(false);
+ if(e.code.startsWith('Digit')){
+  const n=Number(e.code.slice(5));
+  if(n>=1&&n<=9){selected=n-1;updateHotbar()}
+ }
+});
+window.addEventListener('keyup',e=>keys[e.code]=false);
+document.addEventListener('mousemove',e=>{
+ if(!running||mobileDevice||document.pointerLockElement!==renderer?.domElement)return;
+ yaw-=e.movementX*.0022;pitch-=e.movementY*.0022;
+ pitch=THREE.MathUtils.clamp(pitch,-1.52,1.52);updateCamera();
+});
+document.addEventListener('mousedown',e=>{
+ if(!running||inventoryOpen||mobileDevice)return;
+ if(e.button===0)breakBlock();
+ if(e.button===2)placeBlock();
+});
+document.addEventListener('contextmenu',e=>e.preventDefault());
+
+/* MOBILE */
+function setupMobile(){
+ if(!mobileDevice)return;
+ const joystick=$('joystick'),stick=$('stick');
+ let pointer=null;
+ function moveJoy(e){
+  const r=joystick.getBoundingClientRect();
+  let dx=e.clientX-(r.left+r.width/2),dy=e.clientY-(r.top+r.height/2);
+  const max=r.width*.34,len=Math.hypot(dx,dy);
+  if(len>max){dx=dx/len*max;dy=dy/len*max}
+  stick.style.left=`calc(50% + ${dx}px - 24px)`;
+  stick.style.top=`calc(50% + ${dy}px - 24px)`;
+  joy.x=dx/max;joy.z=dy/max;
+ }
+ joystick.addEventListener('pointerdown',e=>{
+  if(!mobileEnabled)return;pointer=e.pointerId;joystick.setPointerCapture(e.pointerId);moveJoy(e);
+ });
+ joystick.addEventListener('pointermove',e=>{if(e.pointerId===pointer)moveJoy(e)});
+ function stopJoy(e){
+  if(e.pointerId!==pointer)return;
+  pointer=null;joy.x=0;joy.z=0;stick.style.left='26px';stick.style.top='26px';
+ }
+ joystick.addEventListener('pointerup',stopJoy);
+ joystick.addEventListener('pointercancel',stopJoy);
+
+ const look=$('mobileLook');
+ look.addEventListener('pointerdown',e=>{
+  if(!mobileEnabled||!running)return;
+  lookPointer=e.pointerId;lastX=e.clientX;lastY=e.clientY;
+  look.setPointerCapture(e.pointerId);
+ });
+ look.addEventListener('pointermove',e=>{
+  if(e.pointerId!==lookPointer||!running||inventoryOpen)return;
+  const dx=e.clientX-lastX,dy=e.clientY-lastY;
+  lastX=e.clientX;lastY=e.clientY;
+  yaw-=dx*.006;pitch-=dy*.006;
+  pitch=THREE.MathUtils.clamp(pitch,-1.52,1.52);updateCamera();
+ });
+ const stopLook=e=>{if(e.pointerId===lookPointer)lookPointer=null};
+ look.addEventListener('pointerup',stopLook);
+ look.addEventListener('pointercancel',stopLook);
+
+ $('mobileJump').onpointerdown=e=>{e.preventDefault();if(mobileEnabled)jumpRequested=true};
+ $('mobileBreak').onpointerdown=e=>{e.preventDefault();if(mobileEnabled)breakBlock()};
+ $('mobilePlace').onpointerdown=e=>{e.preventDefault();if(mobileEnabled)placeBlock()};
+ $('mobileInventory').onpointerdown=e=>{e.preventDefault();if(mobileEnabled)toggleInventory()};
+}
+
+/* LOAD WORLD */
+async function loadWorld(id){
+ const world=storageRead().find(w=>w.id===id);
+ if(!world){toast('Svět nebyl nalezen');return}
+ currentWorld=world;
+ edits=new Map(world.edits||[]);
+ inventory={...Object.fromEntries(items.map(x=>[x,0])),...(world.inventory||{})};
+
+ /* Fullscreen se žádá přímo při kliknutí na Hrát. */
+ if(mobileDevice&&mobileEnabled){
+  try{document.documentElement.requestFullscreen?.().catch(()=>{})}catch{}
+ }
+
+ $('menu').classList.add('hidden');
+ $('loading').classList.add('show');
+ $('loadingProgress').style.width='0%';
+ $('loadingPercent').textContent='0 %';
+ initThree();
+
+ const stages=['Připravujeme svět...','Generujeme terén...','Vytváříme bloky...','Načítáme inventář...','Dokončujeme...'];
+ for(let i=0;i<stages.length;i++){
+  $('loadingText').textContent=stages[i];
+  await new Promise(r=>setTimeout(r,70));
+  if(i===1)buildWorld();
+  const p=Math.round((i+1)/stages.length*100);
+  $('loadingProgress').style.width=p+'%';$('loadingPercent').textContent=p+' %';
+ }
+ startPosition();updateHealth();updateHotbar();setupMobile();
+ $('loading').classList.remove('show');
+ $('hud').classList.remove('hidden');
+ $('mobileControls').style.display=mobileDevice&&mobileEnabled?'block':'none';
+ running=true;
+ toast('Svět je připraven!');
+}
+
+/* LOOP */
+function animate(){
+ requestAnimationFrame(animate);
+ if(!renderer)return;
+ const dt=Math.min(clock.getDelta(),.05);
+ if(running)updatePlayer(dt);
+ renderer.render(scene,camera);
+}
+window.addEventListener('beforeunload',saveWorld);
+document.addEventListener('visibilitychange',()=>{if(document.hidden&&running)saveWorld()});
+
+renderWorlds();updateMobileSwitch();
+</script>
+</body>
+</html>
