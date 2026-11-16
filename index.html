@@ -1,0 +1,322 @@
+
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#101116">
+<title>SirTros-Games</title>
+<script src="https://unpkg.com/lucide@0.468.0/dist/umd/lucide.min.js"></script>
+<style>
+*{box-sizing:border-box}
+:root{
+ --bg:#101116;--side:#171820;--panel:#1b1c25;
+ --text:#f5f5fa;--muted:#90919f;--accent:#9475ff;
+ --border:#ffffff10;
+}
+body{margin:0;background:var(--bg);color:var(--text);font-family:Inter,"Segoe UI",Arial,sans-serif}
+button,input{font:inherit}
+button{cursor:pointer}
+.app{min-height:100vh}
+.sidebar{
+ position:fixed;inset:0 auto 0 0;width:245px;
+ background:var(--side);border-right:1px solid var(--border);
+ padding:25px 17px;display:flex;flex-direction:column;z-index:10
+}
+.brand{display:flex;align-items:center;gap:12px;font-size:19px;font-weight:850;padding:5px 8px;margin-bottom:45px}
+.brand-icon{width:39px;height:39px;border-radius:12px;background:var(--accent);display:grid;place-items:center}
+.brand-icon svg{width:22px}
+.group-title{font-size:10px;color:#737582;font-weight:800;letter-spacing:1.5px;padding:0 12px;margin:15px 0}
+.nav{
+ display:flex;align-items:center;gap:13px;width:100%;padding:13px 14px;
+ border:0;background:transparent;color:var(--muted);border-radius:10px;
+ text-align:left;font-size:14px;margin:3px 0;transition:.2s
+}
+.nav svg{width:18px;height:18px}
+.nav:hover{background:#ffffff09;color:white}
+.nav.active{background:#9475ff20;color:#b7a3ff}
+.side-bottom{margin-top:auto;padding:12px;color:#696b78;font-size:11px}
+main{margin-left:245px;min-height:100vh;padding:27px 4.5% 50px;max-width:1700px}
+.topbar{height:40px;display:flex;align-items:center;justify-content:space-between;margin-bottom:40px}
+.breadcrumb{font-size:13px;color:#999ba8}
+.user{background:#22232d;padding:10px 14px;border-radius:30px;font-size:12px}
+.page{display:none;animation:show .25s ease}
+.page.active{display:block}
+@keyframes show{from{opacity:0;transform:translateY(7px)}to{opacity:1;transform:translateY(0)}}
+h1{font-size:34px;letter-spacing:-1px;margin:0 0 9px}
+.subtitle{font-size:14px;color:var(--muted)}
+.hero{
+ margin-top:30px;min-height:235px;border-radius:17px;overflow:hidden;
+ background:linear-gradient(110deg,#352b62,#1b1c2c 70%);
+ display:flex;align-items:center;padding:35px;position:relative
+}
+.hero:after{content:"";position:absolute;width:280px;height:280px;right:10%;top:-120px;border-radius:50%;background:#9c79ff33;filter:blur(30px)}
+.hero-content{z-index:1}
+.eyebrow{font-size:11px;color:#c4b4ff;letter-spacing:2px;font-weight:bold}
+.hero h2{font-size:32px;margin:13px 0}
+.hero p{font-size:14px;color:#c3c0d0}
+.hero-icon{position:absolute;right:15%;top:50%;transform:translateY(-50%) rotate(-12deg);width:110px;height:110px;color:#c5b8ff;stroke-width:1.2}
+.primary{
+ background:var(--accent);color:white;border:0;border-radius:9px;
+ padding:12px 19px;font-size:13px;font-weight:bold;margin-top:12px;transition:.2s
+}
+.primary:hover{background:#a18aff;transform:translateY(-2px)}
+.section{display:flex;justify-content:space-between;align-items:center;margin:42px 0 19px}
+.section h2{font-size:21px;margin:0}
+.count{font-size:12px;color:var(--muted)}
+.search{
+ width:100%;max-width:330px;background:#1b1c25;border:1px solid var(--border);
+ color:white;border-radius:10px;padding:12px 14px;outline:none;font-size:13px
+}
+.search:focus{border-color:var(--accent)}
+.games{display:grid;grid-template-columns:repeat(auto-fill,minmax(235px,1fr));gap:19px}
+.game{
+ border:1px solid var(--border);background:var(--panel);border-radius:13px;
+ overflow:hidden;transition:.22s;min-width:0
+}
+.game:hover{transform:translateY(-4px);border-color:#9475ff70}
+.cover{
+ height:160px;display:grid;place-items:center;position:relative;overflow:hidden;
+ background:radial-gradient(circle at center,#514181,#202033 75%)
+}
+.cover:before,.cover:after{content:"";position:absolute;border:1px solid #ffffff12;width:130px;height:130px;transform:rotate(35deg);border-radius:25px}
+.cover:after{width:190px;height:190px;transform:rotate(-25deg)}
+.cover-icon{
+ width:75px;height:75px;border-radius:19px;
+ background:linear-gradient(140deg,#c2b1ff,#7050d9);
+ display:grid;place-items:center;box-shadow:0 15px 35px #0007;z-index:1
+}
+.cover-icon svg{width:38px;height:38px}
+.info{padding:17px}
+.info h3{font-size:17px;margin:0 0 8px}
+.info p{font-size:12px;color:var(--muted);line-height:1.5;margin:0;min-height:36px}
+.info-bottom{display:flex;align-items:center;justify-content:space-between;margin-top:17px}
+.tag{font-size:11px;color:#b8a5ff;background:#9475ff20;padding:7px 10px;border-radius:6px}
+.actions{display:flex;gap:8px}
+.play,.fav{
+ border:0;border-radius:8px;display:flex;align-items:center;justify-content:center;gap:7px;
+ padding:10px 13px;font-size:12px;font-weight:bold
+}
+.play{background:var(--accent);color:white}
+.play:hover{background:#a18aff}
+.fav{background:#ffffff0d;color:#aaa}
+.fav.selected{color:#ff829c;background:#ff829c15}
+.empty{padding:45px 15px;text-align:center;color:var(--muted);grid-column:1/-1}
+.empty svg{width:35px;height:35px;margin-bottom:10px}
+footer{border-top:1px solid var(--border);padding-top:20px;margin-top:55px;color:#656875;font-size:11px}
+.mobile-nav{display:none}
+@media(max-width:800px){
+ .sidebar{width:75px;padding:20px 9px}
+ .brand{justify-content:center;padding:0;margin-bottom:38px}
+ .brand span,.nav span,.group-title,.side-bottom{display:none}
+ .nav{justify-content:center;padding:14px 0}
+ main{margin-left:75px;width:calc(100% - 75px);padding:22px 20px 35px}
+}
+@media(max-width:560px){
+ .sidebar{display:none}
+ main{margin:0;width:100%;padding:20px 15px 90px}
+ .topbar{margin-bottom:28px}
+ .hero{padding:25px;min-height:205px}
+ .hero h2{font-size:25px;max-width:240px}
+ .hero p{max-width:220px;line-height:1.5}
+ .hero-icon{right:5%;width:75px;height:75px;opacity:.4}
+ h1{font-size:29px}
+ .section{gap:10px;flex-wrap:wrap}
+ .section h2{font-size:19px}
+ .search{max-width:none}
+ .games{grid-template-columns:1fr}
+ .cover{height:170px}
+ .mobile-nav{
+  display:flex;position:fixed;bottom:0;left:0;right:0;z-index:20;
+  background:#191a23ed;backdrop-filter:blur(18px);
+  border-top:1px solid var(--border);padding:9px 10px calc(9px + env(safe-area-inset-bottom));
+  justify-content:space-around
+ }
+ .mobile-nav button{
+  border:0;background:none;color:#9293a0;display:flex;flex-direction:column;
+  align-items:center;gap:5px;font-size:10px;padding:5px 12px
+ }
+ .mobile-nav button.active{color:#b6a0ff}
+ .mobile-nav svg{width:21px;height:21px}
+ footer{margin-top:35px}
+}
+</style>
+</head>
+<body>
+<div class="app">
+
+<aside class="sidebar">
+ <div class="brand">
+  <div class="brand-icon"><i data-lucide="gamepad-2"></i></div>
+  <span>SirTros-Games</span>
+ </div>
+
+ <div class="group-title">KNIHOVNA</div>
+ <button class="nav active" data-page="games"><i data-lucide="gamepad-2"></i><span>Hry</span></button>
+ <button class="nav" data-page="recent"><i data-lucide="clock-3"></i><span>Nedávné</span></button>
+ <button class="nav" data-page="favorites"><i data-lucide="heart"></i><span>Oblíbené</span></button>
+
+ <div class="side-bottom">© SirTros</div>
+</aside>
+
+<main>
+ <div class="topbar">
+  <div class="breadcrumb">SirTros-Games / <span id="crumb">Hry</span></div>
+  <div class="user"><i data-lucide="user-round" style="width:13px;vertical-align:middle"></i> SirTros</div>
+ </div>
+
+ <section class="page active" id="games">
+  <h1>Moje hry</h1>
+  <p class="subtitle">Všechny hry na jednom místě.</p>
+
+  <div class="hero">
+   <div class="hero-content">
+    <div class="eyebrow">SIRTROS-GAMES LIBRARY</div>
+    <h2>Vítej ve své knihovně.</h2>
+    <p>Vyber si hru a pusť se do hraní.</p>
+    <button class="primary" onclick="document.getElementById('game-list').scrollIntoView({behavior:'smooth'})">Procházet hry →</button>
+   </div>
+   <i class="hero-icon" data-lucide="gamepad-2"></i>
+  </div>
+
+  <div class="section" id="game-list">
+   <h2>Všechny hry</h2>
+   <span class="count" id="all-count">1 HRA</span>
+  </div>
+  <input class="search" id="search" placeholder="⌕  Hledat hry..." autocomplete="off">
+  <div class="games" id="all-games"></div>
+ </section>
+
+ <section class="page" id="recent">
+  <h1>Nedávné</h1>
+  <p class="subtitle">Hry, které jsi naposledy spustil.</p>
+  <div class="section"><h2>Naposledy hrané</h2></div>
+  <div class="games" id="recent-games"></div>
+ </section>
+
+ <section class="page" id="favorites">
+  <h1>Oblíbené</h1>
+  <p class="subtitle">Tvoje oblíbené hry.</p>
+  <div class="section"><h2>Moje oblíbené</h2></div>
+  <div class="games" id="favorite-games"></div>
+ </section>
+
+ <footer>SirTros-Games · Herní knihovna · © SirTros</footer>
+</main>
+
+<nav class="mobile-nav">
+ <button class="active" data-page="games"><i data-lucide="gamepad-2"></i>Hry</button>
+ <button data-page="recent"><i data-lucide="clock-3"></i>Nedávné</button>
+ <button data-page="favorites"><i data-lucide="heart"></i>Oblíbené</button>
+</nav>
+
+</div>
+
+<script>
+const games = [
+ {
+  id:"block",
+  name:"SirTros-Block",
+  description:"Vstup do světa SirTros-Block a začni hrát!",
+  category:"Hra",
+  icon:"box",
+  url:"https://sirtros.github.io/SirTros-Games/Block.html"
+ }
+];
+
+const $ = id => document.getElementById(id);
+
+function getStorage(key){
+ try { return JSON.parse(localStorage.getItem(key)) || []; }
+ catch { return []; }
+}
+function saveStorage(key,value){
+ try { localStorage.setItem(key,JSON.stringify(value)); }
+ catch {}
+}
+
+let favorites=getStorage("st_favorites");
+let recent=getStorage("st_recent");
+
+function card(game){
+ const fav=favorites.includes(game.id);
+ return `
+ <article class="game">
+  <div class="cover">
+   <div class="cover-icon"><i data-lucide="${game.icon}"></i></div>
+  </div>
+  <div class="info">
+   <h3>${game.name}</h3>
+   <p>${game.description}</p>
+   <div class="info-bottom">
+    <span class="tag">${game.category}</span>
+    <div class="actions">
+     <button class="fav ${fav?'selected':''}" data-fav="${game.id}" aria-label="Oblíbené">
+      <i data-lucide="heart"></i>
+     </button>
+     <button class="play" data-play="${game.id}">
+      <i data-lucide="play"></i> HRÁT
+     </button>
+    </div>
+   </div>
+  </div>
+ </article>`;
+}
+
+function empty(message){
+ return `<div class="empty"><i data-lucide="gamepad-2"></i><p>${message}</p></div>`;
+}
+
+function render(){
+ const query=$("search").value.toLowerCase().trim();
+ const filtered=games.filter(g=>g.name.toLowerCase().includes(query));
+
+ $("all-games").innerHTML=filtered.length?filtered.map(card).join(""):empty("Žádná hra nenalezena.");
+ $("recent-games").innerHTML=recent.length?games.filter(g=>recent.includes(g.id)).map(card).join(""):empty("Zatím jsi žádnou hru nespustil.");
+ $("favorite-games").innerHTML=favorites.length?games.filter(g=>favorites.includes(g.id)).map(card).join(""):empty("Zatím nemáš oblíbené hry.");
+ $("all-count").textContent=games.length+" "+(games.length===1?"HRA":"HRY");
+
+ if(window.lucide)lucide.createIcons();
+}
+
+function navigate(page){
+ document.querySelectorAll(".page").forEach(p=>p.classList.remove("active"));
+ $(page).classList.add("active");
+
+ document.querySelectorAll("[data-page]").forEach(b=>{
+  b.classList.toggle("active",b.dataset.page===page);
+ });
+
+ $("crumb").textContent={games:"Hry",recent:"Nedávné",favorites:"Oblíbené"}[page];
+ window.scrollTo({top:0,behavior:"smooth"});
+ render();
+}
+
+document.addEventListener("click",e=>{
+ const nav=e.target.closest("[data-page]");
+ if(nav){navigate(nav.dataset.page);return;}
+
+ const fav=e.target.closest("[data-fav]");
+ if(fav){
+  const id=fav.dataset.fav;
+  favorites=favorites.includes(id)?favorites.filter(x=>x!==id):[...favorites,id];
+  saveStorage("st_favorites",favorites);
+  render();
+  return;
+ }
+
+ const play=e.target.closest("[data-play]");
+ if(play){
+  const game=games.find(g=>g.id===play.dataset.play);
+  if(!game)return;
+  recent=[game.id,...recent.filter(x=>x!==game.id)].slice(0,20);
+  saveStorage("st_recent",recent);
+  window.location.href=game.url;
+ }
+});
+
+$("search").addEventListener("input",render);
+render();
+</script>
+</body>
+</html>
